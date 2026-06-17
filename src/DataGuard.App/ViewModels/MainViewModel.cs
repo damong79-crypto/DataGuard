@@ -35,6 +35,12 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<CheckQuery> Queries { get; } = new();
     public ObservableCollection<CheckResult> RecentResults { get; } = new();
 
+    /// <summary>이력 필터 "쿼리" 콤보의 항목 — 맨 앞 "(전체)" 센티넬 + 등록된 쿼리들.</summary>
+    public ObservableCollection<CheckQuery> QueryFilterOptions { get; } = new();
+
+    /// <summary>쿼리 필터의 "(전체)"를 나타내는 센티넬(목록·이력엔 들어가지 않음).</summary>
+    public static readonly CheckQuery AllQueriesOption = new() { Name = "(전체)" };
+
     [ObservableProperty]
     private CheckQuery? _selectedQuery;
 
@@ -47,9 +53,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _smtpSummary = string.Empty;
 
-    // 이력 필터 — null/0이면 해당 조건 미적용(전체).
+    // 이력 필터 — "(전체)" 선택 시 쿼리 조건 미적용.
     [ObservableProperty]
-    private CheckQuery? _filterQuery;
+    private CheckQuery? _selectedQueryFilter;
 
     [ObservableProperty]
     private int _filterStatusIndex; // 0=전체, 1=정상, 2=이상, 3=오류
@@ -96,7 +102,27 @@ public sealed partial class MainViewModel : ObservableObject
         RetentionDays = _config.HistoryRetentionDays;
         // 현재 등록 상태를 필드에 직접 반영(속성으로 설정하면 OnChanged가 불려 토글이 재실행됨).
         _runAtStartup = _startup.IsEnabled();
+
+        // 쿼리 필터 옵션 구성 + 쿼리 목록 변경 시 자동 재구성.
+        RebuildQueryFilterOptions();
+        Queries.CollectionChanged += (_, _) => RebuildQueryFilterOptions();
+
         UpdateSmtpSummary();
+    }
+
+    // "(전체)" + 현재 쿼리들로 필터 옵션을 다시 만든다. 선택값이 사라졌으면 "(전체)"로 되돌린다.
+    private void RebuildQueryFilterOptions()
+    {
+        CheckQuery? current = SelectedQueryFilter;
+        QueryFilterOptions.Clear();
+        QueryFilterOptions.Add(AllQueriesOption);
+        foreach (CheckQuery query in Queries)
+        {
+            QueryFilterOptions.Add(query);
+        }
+        SelectedQueryFilter = current is not null && QueryFilterOptions.Contains(current)
+            ? current
+            : AllQueriesOption;
     }
 
     // 사용자가 체크박스를 바꿀 때만 호출된다(초기값은 필드로 설정해 제외).
@@ -172,7 +198,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var filter = new HistoryFilter
         {
-            QueryId = FilterQuery?.Id,
+            QueryId = (SelectedQueryFilter is null || ReferenceEquals(SelectedQueryFilter, AllQueriesOption))
+                ? null
+                : SelectedQueryFilter.Id,
             Status = FilterStatusIndex switch
             {
                 1 => CheckStatus.Normal,
@@ -242,7 +270,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ClearFilterAsync()
     {
-        FilterQuery = null;
+        SelectedQueryFilter = AllQueriesOption;
         FilterStatusIndex = 0;
         FilterPeriodIndex = 0;
         await ApplyFilterAsync();

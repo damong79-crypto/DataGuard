@@ -68,9 +68,8 @@
               <DockPanel>
                 <WrapPanel DockPanel.Dock="Top" Margin="4" VerticalAlignment="Center">
                     <TextBlock Text="쿼리" VerticalAlignment="Center" Margin="0,0,4,0" />
-                    <ComboBox Width="150" ItemsSource="{Binding Queries}" DisplayMemberPath="Name"
-                              SelectedItem="{Binding FilterQuery}" Margin="0,0,12,0"
-                              ToolTip="비우면 전체 쿼리" />
+                    <ComboBox Width="150" ItemsSource="{Binding QueryFilterOptions}" DisplayMemberPath="Name"
+                              SelectedItem="{Binding SelectedQueryFilter}" Margin="0,0,12,0" />
                     <TextBlock Text="상태" VerticalAlignment="Center" Margin="0,0,4,0" />
                     <ComboBox Width="90" SelectedIndex="{Binding FilterStatusIndex}" Margin="0,0,12,0">
                         <ComboBoxItem Content="전체" />
