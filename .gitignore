@@ -32,6 +32,9 @@ secrets.json
 *.sqlite
 *.sqlite3
 
+# --- 배포 산출물 ---
+publish/
+
 # --- OS ---
 Thumbs.db
 Desktop.ini

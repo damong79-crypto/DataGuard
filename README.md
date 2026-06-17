@@ -40,6 +40,23 @@ dotnet test                              # 단위 테스트 (DataGuard.Core.Test
 
 > 요구: .NET 8 SDK (Windows). WPF이므로 Windows 전용.
 
+## 배포 (단일 EXE)
+
+.NET 미설치 PC에서도 실행되는 **자체 포함 단일 실행 파일**로 게시:
+
+```bash
+dotnet publish src/DataGuard.App/DataGuard.App.csproj -c Release -r win-x64 \
+  --self-contained true -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true \
+  -p:DebugType=none -p:DebugSymbols=false -o publish
+```
+
+→ `publish/DataGuard.App.exe` 하나만 생성(약 72MB, 런타임 포함). 이 파일만 배포하면 됨.
+Visual Studio에서는 `Properties/PublishProfiles/win-x64-single.pubxml` 프로필로 게시.
+
+> .NET 8 Desktop Runtime이 이미 깔린 환경이면 `--self-contained false`로 용량을 크게 줄일 수 있음.
+> 서명되지 않은 EXE는 SmartScreen/Smart App Control이 실행을 막을 수 있음(사내 배포 시 코드 서명 권장).
+
 ## 테스트
 
 `tests/DataGuard.Core.Tests` (xUnit) — 순수 로직 검증:
