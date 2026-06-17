@@ -24,6 +24,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICheckScheduler _scheduler;
     private readonly AppConfig _config;
 
+    /// <summary>체크 1건이 끝날 때마다 발생(수동·자동 공통). 트레이 풍선 알림 등에 사용. UI 스레드에서 발생.</summary>
+    public event Action<CheckResult>? CheckCompleted;
+
     public ObservableCollection<DbConnectionInfo> Connections { get; } = new();
     public ObservableCollection<CheckQuery> Queries { get; } = new();
     public ObservableCollection<CheckResult> RecentResults { get; } = new();
@@ -181,6 +184,7 @@ public sealed partial class MainViewModel : ObservableObject
             CheckResult result = await RunQueryAsync(SelectedQuery);
             RecentResults.Insert(0, result);
             StatusMessage = Describe(result);
+            CheckCompleted?.Invoke(result);
         }
         catch (Exception ex)
         {
@@ -353,6 +357,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 RecentResults.Insert(0, result);
                 StatusMessage = "[자동] " + Describe(result);
+                CheckCompleted?.Invoke(result);
             });
         }
         catch (Exception ex)
