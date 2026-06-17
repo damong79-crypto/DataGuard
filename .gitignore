@@ -1,0 +1,41 @@
+# --- .NET / Visual Studio ---
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.userprefs
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+*.nupkg
+packages/
+
+# --- 민감 정보 (절대 커밋 금지) ---
+# DB 접속정보·SMTP 자격증명은 코드/설정파일에 하드코딩하지 않음.
+# Windows 자격 증명 관리자 또는 환경변수/시크릿 사용.
+appsettings.*.json
+*.secret
+secrets.json
+.env
+
+# --- 로컬 데이터 ---
+# 결과 이력 로컬 DB (SQLite 등)
+*.db
+*.sqlite
+*.sqlite3
+
+# --- OS ---
+Thumbs.db
+Desktop.ini
+
+# --- 한빛 내부 자료 (public 저장소 제외) ---
+10_실습자료/
+hanbit-prd-interview.skill
