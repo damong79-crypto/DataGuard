@@ -22,6 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICredentialStore _credentials;
     private readonly ICheckHistoryRepository _history;
     private readonly ICheckScheduler _scheduler;
+    private readonly IConnectionTester _connectionTester;
     private readonly AppConfig _config;
 
     /// <summary>체크 1건이 끝날 때마다 발생(수동·자동 공통). 트레이 풍선 알림 등에 사용. UI 스레드에서 발생.</summary>
@@ -48,13 +49,15 @@ public sealed partial class MainViewModel : ObservableObject
         IAppConfigStore configStore,
         ICredentialStore credentials,
         ICheckHistoryRepository history,
-        ICheckScheduler scheduler)
+        ICheckScheduler scheduler,
+        IConnectionTester connectionTester)
     {
         _checkRunner = checkRunner;
         _configStore = configStore;
         _credentials = credentials;
         _history = history;
         _scheduler = scheduler;
+        _connectionTester = connectionTester;
 
         _config = _configStore.Load();
         foreach (DbConnectionInfo connection in _config.Connections)
@@ -91,7 +94,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddConnection()
     {
-        var dialog = new ConnectionEditWindow { Owner = Application.Current.MainWindow };
+        var dialog = new ConnectionEditWindow(_connectionTester) { Owner = Application.Current.MainWindow };
         if (dialog.ShowDialog() != true || dialog.Connection is null)
         {
             return;
@@ -220,8 +223,8 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        var dialog = new ConnectionEditWindow { Owner = Application.Current.MainWindow };
-        dialog.LoadForEdit(SelectedConnection);
+        var dialog = new ConnectionEditWindow(_connectionTester) { Owner = Application.Current.MainWindow };
+        dialog.LoadForEdit(SelectedConnection, _credentials.Retrieve(SelectedConnection.CredentialKey));
         if (dialog.ShowDialog() != true || dialog.Connection is null)
         {
             return;

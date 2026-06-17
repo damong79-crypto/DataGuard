@@ -2,8 +2,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using DataGuard.Core.Abstractions;
 using DataGuard.Core.Models;
-using Microsoft.Data.SqlClient;
-using Npgsql;
 
 namespace DataGuard.Core.Services;
 
@@ -30,7 +28,7 @@ public sealed class QueryExecutor : IQueryExecutor
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            await using DbConnection db = CreateConnection(connection, password);
+            await using DbConnection db = DbConnectionFactory.Create(connection, password);
             await db.OpenAsync(cancellationToken).ConfigureAwait(false);
 
             await using DbCommand command = db.CreateCommand();
@@ -68,42 +66,5 @@ public sealed class QueryExecutor : IQueryExecutor
             stopwatch.Stop();
             return QueryExecutionOutcome.Failure($"예기치 못한 오류: {ex.Message}", stopwatch.Elapsed);
         }
-    }
-
-    private static DbConnection CreateConnection(DbConnectionInfo info, string password) =>
-        info.Provider switch
-        {
-            DbProvider.SqlServer => new SqlConnection(BuildSqlServerConnectionString(info, password)),
-            DbProvider.PostgreSql => new NpgsqlConnection(BuildPostgreSqlConnectionString(info, password)),
-            _ => throw new NotSupportedException($"지원하지 않는 DB 종류: {info.Provider}")
-        };
-
-    private static string BuildSqlServerConnectionString(DbConnectionInfo info, string password)
-    {
-        var builder = new SqlConnectionStringBuilder
-        {
-            DataSource = info.Port > 0 ? $"{info.Host},{info.Port}" : info.Host,
-            InitialCatalog = info.Database,
-            UserID = info.Username,
-            Password = password,
-            ConnectTimeout = 15,
-            // 사내 환경 인증서 이슈를 피하기 위한 기본값. 운영 보안 정책에 맞춰 재검토 필요.
-            TrustServerCertificate = true
-        };
-        return builder.ConnectionString;
-    }
-
-    private static string BuildPostgreSqlConnectionString(DbConnectionInfo info, string password)
-    {
-        var builder = new NpgsqlConnectionStringBuilder
-        {
-            Host = info.Host,
-            Port = info.Port > 0 ? info.Port : 5432,
-            Database = info.Database,
-            Username = info.Username,
-            Password = password,
-            Timeout = 15
-        };
-        return builder.ConnectionString;
     }
 }

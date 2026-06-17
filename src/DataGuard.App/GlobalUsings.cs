@@ -3,3 +3,5 @@
 // WinForms 트레이 타입은 코드에서 WinForms. 별칭으로 정규화해 사용한다.
 global using Application = System.Windows.Application;
 global using MessageBox = System.Windows.MessageBox;
+global using Brushes = System.Windows.Media.Brushes;
+global using SystemColors = System.Windows.SystemColors;

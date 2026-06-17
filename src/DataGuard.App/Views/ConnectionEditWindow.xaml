@@ -46,10 +46,20 @@
                    Margin="0,8" VerticalAlignment="Bottom"
                    Text="비밀번호는 Windows 자격 증명 저장소(DPAPI)에 암호화 저장됩니다. 읽기 전용 계정 권장." />
 
-        <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Orientation="Horizontal"
-                    HorizontalAlignment="Right" Margin="0,8,0,0">
-            <Button Content="저장" Width="80" IsDefault="True" Click="OnSave" Margin="0,0,8,0" />
-            <Button Content="취소" Width="80" IsCancel="True" />
-        </StackPanel>
+        <Grid Grid.Row="8" Grid.ColumnSpan="2" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button x:Name="TestButton" Content="연결 테스트" Width="100" Click="OnTest" />
+                <TextBlock x:Name="TestResultText" VerticalAlignment="Center" Margin="10,0,0,0"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="저장" Width="80" IsDefault="True" Click="OnSave" Margin="0,0,8,0" />
+                <Button Content="취소" Width="80" IsCancel="True" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

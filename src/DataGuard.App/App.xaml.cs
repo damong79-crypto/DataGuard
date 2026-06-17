@@ -39,6 +39,7 @@ public partial class App : Application
     {
         // Core 서비스 (인터페이스 → 구현)
         services.AddSingleton<IQueryExecutor, QueryExecutor>();
+        services.AddSingleton<IConnectionTester, ConnectionTester>();
         services.AddSingleton<IResultJudge, RowCountResultJudge>();
         services.AddSingleton<ICredentialStore>(_ => new DpapiCredentialStore());
         services.AddSingleton<IEmailNotifier, SmtpEmailNotifier>();
