@@ -355,6 +355,41 @@ public sealed partial class MainViewModel : ObservableObject
 
     private bool CanRunNow() => SelectedQuery is not null;
 
+    [RelayCommand]
+    private async Task RunAllAsync()
+    {
+        // 사용 중인 모든 쿼리를 순차 실행(스냅샷으로 순회 — 실행 중 목록 변경 영향 차단).
+        List<CheckQuery> targets = Queries.Where(q => q.IsEnabled).ToList();
+        if (targets.Count == 0)
+        {
+            StatusMessage = "실행할 쿼리가 없습니다.";
+            return;
+        }
+
+        int ran = 0, anomalies = 0, errors = 0;
+        foreach (CheckQuery query in targets)
+        {
+            try
+            {
+                StatusMessage = $"전체 실행 중... ({ran + 1}/{targets.Count}) {query.Name}";
+                CheckResult result = await RunQueryAsync(query);
+                RecentResults.Insert(0, result);
+                CheckCompleted?.Invoke(result);
+                if (result.Status == CheckStatus.Anomaly) anomalies++;
+                if (result.Status == CheckStatus.Error) errors++;
+            }
+            catch (Exception ex)
+            {
+                // 한 건 실패해도 나머지는 계속 진행.
+                errors++;
+                StatusMessage = $"'{query.Name}' 실행 실패: {ex.Message}";
+            }
+            ran++;
+        }
+
+        StatusMessage = $"전체 실행 완료 — {ran}건 실행, 이상 {anomalies}건, 오류 {errors}건";
+    }
+
     private bool HasSelectedQuery() => SelectedQuery is not null;
 
     private bool HasSelectedConnection() => SelectedConnection is not null;
