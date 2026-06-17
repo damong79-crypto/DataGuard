@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -200,6 +202,40 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusMessage = $"이력 조회 실패: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void ExportCsv()
+    {
+        if (RecentResults.Count == 0)
+        {
+            StatusMessage = "내보낼 이력이 없습니다.";
+            return;
+        }
+
+        // WPF 공용 대화상자(WinForms와 모호하지 않도록 정규화).
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = "dataguard-history.csv",
+            Filter = "CSV 파일 (*.csv)|*.csv",
+            DefaultExt = ".csv"
+        };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            string csv = CheckResultCsvExporter.ToCsv(RecentResults);
+            // Excel이 한글을 올바로 인식하도록 UTF-8 BOM 포함.
+            File.WriteAllText(dialog.FileName, csv, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            StatusMessage = $"이력 {RecentResults.Count}건을 CSV로 내보냈습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"내보내기 실패: {ex.Message}";
         }
     }
 

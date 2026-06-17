@@ -84,7 +84,8 @@
                         <ComboBoxItem Content="최근 30일" />
                     </ComboBox>
                     <Button Content="조회" Command="{Binding ApplyFilterCommand}" Padding="12,2" Margin="0,0,6,0" />
-                    <Button Content="초기화" Command="{Binding ClearFilterCommand}" Padding="12,2" />
+                    <Button Content="초기화" Command="{Binding ClearFilterCommand}" Padding="12,2" Margin="0,0,6,0" />
+                    <Button Content="CSV 내보내기" Command="{Binding ExportCsvCommand}" Padding="12,2" />
                 </WrapPanel>
                 <DataGrid ItemsSource="{Binding RecentResults}" AutoGenerateColumns="False"
                           IsReadOnly="True" Margin="4">
