@@ -42,6 +42,7 @@
                           AutoGenerateColumns="False" IsReadOnly="True" Margin="4">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="이름" Binding="{Binding Name}" Width="*" />
+                        <DataGridTextColumn Header="스케줄" Binding="{Binding Schedule}" Width="120" />
                         <DataGridTextColumn Header="발송 정책" Binding="{Binding NotifyPolicy}" Width="140" />
                         <DataGridCheckBoxColumn Header="사용" Binding="{Binding IsEnabled}" Width="60" />
                     </DataGrid.Columns>

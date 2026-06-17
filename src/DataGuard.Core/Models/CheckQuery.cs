@@ -18,11 +18,8 @@ public sealed class CheckQuery
 
     public NotifyPolicy NotifyPolicy { get; set; } = NotifyPolicy.OnAnomalyOnly;
 
-    /// <summary>
-    /// 자동 실행 스케줄. MVP 이후 단계 기능이므로 null이면 수동 실행만 가능.
-    /// 표현식 형식(cron/간격)은 스케줄러 구현에서 확정한다.
-    /// </summary>
-    public string? Schedule { get; set; }
+    /// <summary>자동 실행 스케줄. null이면 수동 실행("지금 실행")만 가능.</summary>
+    public ScheduleSpec? Schedule { get; set; }
 
     public bool IsEnabled { get; set; } = true;
 }

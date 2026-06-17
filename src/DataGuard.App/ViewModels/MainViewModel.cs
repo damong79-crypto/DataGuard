@@ -21,6 +21,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IAppConfigStore _configStore;
     private readonly ICredentialStore _credentials;
     private readonly ICheckHistoryRepository _history;
+    private readonly ICheckScheduler _scheduler;
     private readonly AppConfig _config;
 
     public ObservableCollection<DbConnectionInfo> Connections { get; } = new();
@@ -40,12 +41,14 @@ public sealed partial class MainViewModel : ObservableObject
         CheckRunner checkRunner,
         IAppConfigStore configStore,
         ICredentialStore credentials,
-        ICheckHistoryRepository history)
+        ICheckHistoryRepository history,
+        ICheckScheduler scheduler)
     {
         _checkRunner = checkRunner;
         _configStore = configStore;
         _credentials = credentials;
         _history = history;
+        _scheduler = scheduler;
 
         _config = _configStore.Load();
         foreach (DbConnectionInfo connection in _config.Connections)
@@ -55,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (CheckQuery query in _config.Queries)
         {
             Queries.Add(query);
+            _scheduler.Schedule(query, OnScheduledTriggerAsync); // 스케줄 있는 쿼리만 실제 등록됨
         }
 
         UpdateSmtpSummary();
@@ -115,7 +119,10 @@ public sealed partial class MainViewModel : ObservableObject
         _config.Queries.Add(dialog.Query);
         Queries.Add(dialog.Query);
         _configStore.Save(_config);
-        StatusMessage = $"쿼리 추가: {dialog.Query.Name}";
+        _scheduler.Schedule(dialog.Query, OnScheduledTriggerAsync);
+
+        string scheduleNote = dialog.Query.Schedule is null ? "수동" : dialog.Query.Schedule.ToString();
+        StatusMessage = $"쿼리 추가: {dialog.Query.Name} ({scheduleNote})";
     }
 
     [RelayCommand]
@@ -168,14 +175,9 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             StatusMessage = $"'{SelectedQuery.Name}' 실행 중...";
-            SmtpSettings? smtp = _config.IsEmailConfigured ? _config.Smtp : null;
-
-            CheckResult result = await _checkRunner.RunAsync(
-                SelectedQuery, connection, _config.Recipients, smtp);
-
+            CheckResult result = await RunQueryAsync(SelectedQuery);
             RecentResults.Insert(0, result);
-            StatusMessage =
-                $"{result.QueryName}: {result.Status} (건수 {result.RowCount}, {result.DurationMs}ms)";
+            StatusMessage = Describe(result);
         }
         catch (Exception ex)
         {
@@ -187,4 +189,37 @@ public sealed partial class MainViewModel : ObservableObject
     private bool CanRunNow() => SelectedQuery is not null;
 
     partial void OnSelectedQueryChanged(CheckQuery? value) => RunNowCommand.NotifyCanExecuteChanged();
+
+    // 수동·자동 실행이 공유하는 실제 실행 경로(UI 갱신은 호출자가 담당).
+    private Task<CheckResult> RunQueryAsync(CheckQuery query)
+    {
+        DbConnectionInfo connection =
+            _config.Connections.FirstOrDefault(c => c.Id == query.ConnectionId)
+            ?? throw new InvalidOperationException("이 쿼리의 대상 연결을 찾을 수 없습니다.");
+
+        SmtpSettings? smtp = _config.IsEmailConfigured ? _config.Smtp : null;
+        return _checkRunner.RunAsync(query, connection, _config.Recipients, smtp);
+    }
+
+    // 스케줄러 타이머 스레드에서 호출된다 — UI 컬렉션·속성 갱신은 디스패처로 마샬링한다.
+    private async Task OnScheduledTriggerAsync(CheckQuery query)
+    {
+        try
+        {
+            CheckResult result = await RunQueryAsync(query);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                RecentResults.Insert(0, result);
+                StatusMessage = "[자동] " + Describe(result);
+            });
+        }
+        catch (Exception ex)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+                StatusMessage = $"[자동] {query.Name} 실행 실패: {ex.Message}");
+        }
+    }
+
+    private static string Describe(CheckResult result) =>
+        $"{result.QueryName}: {result.Status} (건수 {result.RowCount}, {result.DurationMs}ms)";
 }

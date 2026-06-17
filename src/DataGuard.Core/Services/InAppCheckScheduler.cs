@@ -6,31 +6,31 @@ namespace DataGuard.Core.Services;
 
 /// <summary>
 /// 트레이 상주 중 동작하는 인메모리 스케줄러(PRD 기능 ⑤, 상주형 A).
-///
-/// 현재는 골격만 제공한다 — 스케줄 문자열(cron/간격) 파싱과 다음 실행 시각 계산은
-/// MVP 이후 단계에서 구현한다. 등록/해제/중지의 수명주기 관리 틀만 잡아둔다.
+/// 각 쿼리마다 "다음 실행 시각"을 계산해 일회성 타이머를 걸고, 실행 후 다음 회차를 다시 건다.
+/// 앱이 꺼져 있는 시간대의 체크는 보장하지 않는다(PRD 위험 ②).
 /// </summary>
 public sealed class InAppCheckScheduler : ICheckScheduler, IDisposable
 {
+    // .NET Timer의 최대 지연(약 24.8일). 우리 스케줄(분/일/평일)은 항상 이보다 짧다.
+    private static readonly TimeSpan MaxDelay = TimeSpan.FromMilliseconds(int.MaxValue - 1);
+
     private readonly ConcurrentDictionary<Guid, Timer> _timers = new();
+    private bool _disposed;
 
     public void Schedule(CheckQuery query, Func<CheckQuery, Task> onTrigger)
     {
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(onTrigger);
 
-        // 기존 등록이 있으면 교체.
         Unschedule(query.Id);
 
-        // TODO(MVP 이후): query.Schedule 문자열을 파싱해 실제 주기/시각을 계산한다.
-        // 지금은 스케줄 미구현 상태이므로 등록만 받아두고 타이머는 비활성으로 생성한다.
-        var timer = new Timer(
-            callback: _ => _ = onTrigger(query),
-            state: null,
-            dueTime: Timeout.Infinite,
-            period: Timeout.Infinite);
+        // 스케줄이 없거나 비활성 쿼리는 자동 실행 대상이 아니다.
+        if (query.Schedule is null || !query.IsEnabled || _disposed)
+        {
+            return;
+        }
 
-        _timers[query.Id] = timer;
+        ArmNext(query, onTrigger);
     }
 
     public void Unschedule(Guid queryId)
@@ -49,5 +49,58 @@ public sealed class InAppCheckScheduler : ICheckScheduler, IDisposable
         }
     }
 
-    public void Dispose() => StopAll();
+    // 다음 실행 시각까지의 일회성 타이머를 건다. 실행 후 다음 회차를 위해 스스로 다시 무장한다.
+    private void ArmNext(CheckQuery query, Func<CheckQuery, Task> onTrigger)
+    {
+        DateTimeOffset now = DateTimeOffset.Now;
+        DateTimeOffset? next = query.Schedule!.GetNextRun(now);
+        if (next is null || _disposed)
+        {
+            return;
+        }
+
+        TimeSpan delay = next.Value - now;
+        if (delay < TimeSpan.Zero)
+        {
+            delay = TimeSpan.Zero;
+        }
+        else if (delay > MaxDelay)
+        {
+            delay = MaxDelay;
+        }
+
+        var timer = new Timer(
+            callback: async void (_) =>
+            {
+                try
+                {
+                    await onTrigger(query).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // 트리거 콜백은 자체적으로 예외를 처리해야 한다.
+                    // 여기서는 스케줄러 스레드가 죽지 않도록 최후 방어만 한다.
+                }
+                finally
+                {
+                    ArmNext(query, onTrigger); // 다음 회차 예약
+                }
+            },
+            state: null,
+            dueTime: delay,
+            period: Timeout.InfiniteTimeSpan);
+
+        // 방금 발화한(또는 교체될) 이전 타이머를 정리하고 새 타이머로 교체.
+        if (_timers.TryRemove(query.Id, out Timer? previous))
+        {
+            previous.Dispose();
+        }
+        _timers[query.Id] = timer;
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        StopAll();
+    }
 }
