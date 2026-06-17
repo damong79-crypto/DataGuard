@@ -32,6 +32,9 @@ public sealed partial class MainViewModel : ObservableObject
     private CheckQuery? _selectedQuery;
 
     [ObservableProperty]
+    private DbConnectionInfo? _selectedConnection;
+
+    [ObservableProperty]
     private string _statusMessage = "준비됨";
 
     [ObservableProperty]
@@ -188,7 +191,146 @@ public sealed partial class MainViewModel : ObservableObject
 
     private bool CanRunNow() => SelectedQuery is not null;
 
-    partial void OnSelectedQueryChanged(CheckQuery? value) => RunNowCommand.NotifyCanExecuteChanged();
+    private bool HasSelectedQuery() => SelectedQuery is not null;
+
+    private bool HasSelectedConnection() => SelectedConnection is not null;
+
+    partial void OnSelectedQueryChanged(CheckQuery? value)
+    {
+        RunNowCommand.NotifyCanExecuteChanged();
+        EditQueryCommand.NotifyCanExecuteChanged();
+        DeleteQueryCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedConnectionChanged(DbConnectionInfo? value)
+    {
+        EditConnectionCommand.NotifyCanExecuteChanged();
+        DeleteConnectionCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedConnection))]
+    private void EditConnection()
+    {
+        if (SelectedConnection is null)
+        {
+            return;
+        }
+
+        var dialog = new ConnectionEditWindow { Owner = Application.Current.MainWindow };
+        dialog.LoadForEdit(SelectedConnection);
+        if (dialog.ShowDialog() != true || dialog.Connection is null)
+        {
+            return;
+        }
+
+        DbConnectionInfo updated = dialog.Connection; // 동일 Id 보존
+        // 비밀번호는 입력된 경우에만 갱신(빈칸이면 기존 값 유지).
+        if (dialog.Password.Length > 0)
+        {
+            _credentials.Save(updated.CredentialKey, dialog.Password);
+        }
+
+        Replace(_config.Connections, updated, c => c.Id == updated.Id);
+        Replace(Connections, updated, c => c.Id == updated.Id);
+        _configStore.Save(_config);
+        SelectedConnection = updated;
+        StatusMessage = $"연결 수정: {updated.Name}";
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedConnection))]
+    private void DeleteConnection()
+    {
+        if (SelectedConnection is null)
+        {
+            return;
+        }
+
+        DbConnectionInfo target = SelectedConnection;
+
+        // 이 연결을 참조하는 쿼리가 있으면 삭제를 막는다(고아 참조 방지).
+        if (_config.Queries.Any(q => q.ConnectionId == target.Id))
+        {
+            MessageBox.Show(Application.Current.MainWindow,
+                "이 연결을 사용하는 쿼리가 있어 삭제할 수 없습니다. 먼저 해당 쿼리를 삭제하거나 다른 연결로 변경하세요.",
+                "삭제 불가", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!Confirm($"연결 '{target.Name}'을(를) 삭제할까요? 저장된 비밀번호도 함께 삭제됩니다."))
+        {
+            return;
+        }
+
+        _credentials.Delete(target.CredentialKey);
+        _config.Connections.RemoveAll(c => c.Id == target.Id);
+        Connections.Remove(target);
+        _configStore.Save(_config);
+        StatusMessage = $"연결 삭제: {target.Name}";
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedQuery))]
+    private void EditQuery()
+    {
+        if (SelectedQuery is null)
+        {
+            return;
+        }
+
+        var dialog = new QueryEditWindow(_config.Connections) { Owner = Application.Current.MainWindow };
+        dialog.LoadForEdit(SelectedQuery);
+        if (dialog.ShowDialog() != true || dialog.Query is null)
+        {
+            return;
+        }
+
+        CheckQuery updated = dialog.Query; // 동일 Id 보존
+        Replace(_config.Queries, updated, q => q.Id == updated.Id);
+        Replace(Queries, updated, q => q.Id == updated.Id);
+        _configStore.Save(_config);
+        _scheduler.Schedule(updated, OnScheduledTriggerAsync); // 기존 스케줄 해제 후 재등록
+        SelectedQuery = updated;
+
+        string scheduleNote = updated.Schedule is null ? "수동" : updated.Schedule.ToString();
+        StatusMessage = $"쿼리 수정: {updated.Name} ({scheduleNote})";
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedQuery))]
+    private void DeleteQuery()
+    {
+        if (SelectedQuery is null)
+        {
+            return;
+        }
+
+        CheckQuery target = SelectedQuery;
+        if (!Confirm($"쿼리 '{target.Name}'을(를) 삭제할까요?"))
+        {
+            return;
+        }
+
+        _scheduler.Unschedule(target.Id);
+        _config.Queries.RemoveAll(q => q.Id == target.Id);
+        Queries.Remove(target);
+        _configStore.Save(_config);
+        StatusMessage = $"쿼리 삭제: {target.Name}";
+    }
+
+    // 리스트에서 동일 키 항목을 새 인스턴스로 교체(ObservableCollection이면 UI도 갱신).
+    private static void Replace<T>(IList<T> list, T item, Func<T, bool> match)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (match(list[i]))
+            {
+                list[i] = item;
+                return;
+            }
+        }
+    }
+
+    private static bool Confirm(string message) =>
+        MessageBox.Show(Application.Current.MainWindow, message, "확인",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
     // 수동·자동 실행이 공유하는 실제 실행 경로(UI 갱신은 호출자가 담당).
     private Task<CheckResult> RunQueryAsync(CheckQuery query)

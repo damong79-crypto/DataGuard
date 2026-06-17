@@ -42,7 +42,7 @@
         <TextBlock Grid.Row="6" Grid.Column="0" Text="비밀번호" VerticalAlignment="Center" Margin="0,6" />
         <PasswordBox Grid.Row="6" Grid.Column="1" x:Name="PasswordBox" Margin="0,6" />
 
-        <TextBlock Grid.Row="7" Grid.ColumnSpan="2" TextWrapping="Wrap" Foreground="Gray"
+        <TextBlock Grid.Row="7" Grid.ColumnSpan="2" x:Name="HintText" TextWrapping="Wrap" Foreground="Gray"
                    Margin="0,8" VerticalAlignment="Bottom"
                    Text="비밀번호는 Windows 자격 증명 저장소(DPAPI)에 암호화 저장됩니다. 읽기 전용 계정 권장." />
 

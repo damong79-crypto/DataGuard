@@ -10,15 +10,34 @@ namespace DataGuard.App.Views;
 /// </summary>
 public partial class ConnectionEditWindow : Window
 {
+    private Guid? _editingId;
+
     public DbConnectionInfo? Connection { get; private set; }
 
     public string Password { get; private set; } = string.Empty;
+
+    public bool IsEditMode => _editingId.HasValue;
 
     public ConnectionEditWindow()
     {
         InitializeComponent();
         ProviderBox.ItemsSource = Enum.GetValues<DbProvider>();
         ProviderBox.SelectedIndex = 0;
+    }
+
+    /// <summary>기존 연결을 편집한다. Id를 보존해 자격증명 키·쿼리 참조가 유지된다.</summary>
+    public void LoadForEdit(DbConnectionInfo existing)
+    {
+        _editingId = existing.Id;
+        Title = "연결 편집";
+        NameBox.Text = existing.Name;
+        ProviderBox.SelectedItem = existing.Provider;
+        HostBox.Text = existing.Host;
+        PortBox.Text = existing.Port > 0 ? existing.Port.ToString() : string.Empty;
+        DatabaseBox.Text = existing.Database;
+        UsernameBox.Text = existing.Username;
+        // 비밀번호는 보안상 다시 보여주지 않는다 — 빈칸이면 기존 값을 유지한다.
+        HintText.Text = "비밀번호는 빈칸으로 두면 기존 값이 유지됩니다. 변경하려면 입력하세요. 읽기 전용 계정 권장.";
     }
 
     private void OnSave(object sender, RoutedEventArgs e)
@@ -55,6 +74,13 @@ public partial class ConnectionEditWindow : Window
             Database = database,
             Username = username
         };
+
+        // 편집이면 Id를 보존(자격증명 키·쿼리 참조 유지).
+        if (_editingId.HasValue)
+        {
+            Connection.Id = _editingId.Value;
+        }
+
         Password = password;
         DialogResult = true;
     }

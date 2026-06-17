@@ -25,8 +25,14 @@
         <!-- PRD 기능별 탭 골격 -->
         <TabControl Margin="8">
             <TabItem Header="연결">
-                <DataGrid ItemsSource="{Binding Connections}" AutoGenerateColumns="False"
-                          IsReadOnly="True" Margin="4">
+              <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
+                    <Button Content="편집" Command="{Binding EditConnectionCommand}" Padding="10,2" Margin="0,0,6,0" />
+                    <Button Content="삭제" Command="{Binding DeleteConnectionCommand}" Padding="10,2" />
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Connections}"
+                          SelectedItem="{Binding SelectedConnection}"
+                          AutoGenerateColumns="False" IsReadOnly="True" Margin="4">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="이름" Binding="{Binding Name}" Width="*" />
                         <DataGridTextColumn Header="종류" Binding="{Binding Provider}" Width="120" />
@@ -34,9 +40,15 @@
                         <DataGridTextColumn Header="DB" Binding="{Binding Database}" Width="160" />
                     </DataGrid.Columns>
                 </DataGrid>
+              </DockPanel>
             </TabItem>
 
             <TabItem Header="체크 쿼리">
+              <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
+                    <Button Content="편집" Command="{Binding EditQueryCommand}" Padding="10,2" Margin="0,0,6,0" />
+                    <Button Content="삭제" Command="{Binding DeleteQueryCommand}" Padding="10,2" />
+                </StackPanel>
                 <DataGrid ItemsSource="{Binding Queries}"
                           SelectedItem="{Binding SelectedQuery}"
                           AutoGenerateColumns="False" IsReadOnly="True" Margin="4">
@@ -47,6 +59,7 @@
                         <DataGridCheckBoxColumn Header="사용" Binding="{Binding IsEnabled}" Width="60" />
                     </DataGrid.Columns>
                 </DataGrid>
+              </DockPanel>
             </TabItem>
 
             <TabItem Header="이력">

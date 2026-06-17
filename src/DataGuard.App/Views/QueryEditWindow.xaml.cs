@@ -7,12 +7,17 @@ namespace DataGuard.App.Views;
 /// <summary>체크 쿼리 등록 다이얼로그(스케줄 포함).</summary>
 public partial class QueryEditWindow : Window
 {
+    private readonly IReadOnlyList<DbConnectionInfo> _connections;
+    private Guid? _editingId;
+    private bool _editingIsEnabled = true;
+
     public CheckQuery? Query { get; private set; }
 
     /// <param name="connections">대상 연결로 고를 수 있는, 이미 등록된 연결 목록.</param>
     public QueryEditWindow(IReadOnlyList<DbConnectionInfo> connections)
     {
         InitializeComponent();
+        _connections = connections;
         ConnectionBox.ItemsSource = connections;
         if (connections.Count > 0)
         {
@@ -23,6 +28,39 @@ public partial class QueryEditWindow : Window
         PolicyBox.SelectedItem = NotifyPolicy.OnAnomalyOnly;
 
         ScheduleKindBox.SelectedIndex = 0; // 기본: 수동 실행만
+    }
+
+    /// <summary>기존 쿼리를 편집한다. Id·사용여부를 보존한다.</summary>
+    public void LoadForEdit(CheckQuery existing)
+    {
+        _editingId = existing.Id;
+        _editingIsEnabled = existing.IsEnabled;
+        Title = "체크 쿼리 편집";
+
+        NameBox.Text = existing.Name;
+        ConnectionBox.SelectedItem = _connections.FirstOrDefault(c => c.Id == existing.ConnectionId);
+        PolicyBox.SelectedItem = existing.NotifyPolicy;
+        SqlBox.Text = existing.Sql;
+
+        // 스케줄을 UI 컨트롤로 역매핑(SelectedIndex 설정이 필드 활성화도 갱신).
+        switch (existing.Schedule?.Kind)
+        {
+            case ScheduleKind.EveryMinutes:
+                ScheduleKindBox.SelectedIndex = 1;
+                IntervalBox.Text = existing.Schedule.IntervalMinutes.ToString();
+                break;
+            case ScheduleKind.DailyAt:
+                ScheduleKindBox.SelectedIndex = 2;
+                TimeBox.Text = existing.Schedule.TimeOfDay.ToString(@"hh\:mm");
+                break;
+            case ScheduleKind.WeekdaysAt:
+                ScheduleKindBox.SelectedIndex = 3;
+                TimeBox.Text = existing.Schedule.TimeOfDay.ToString(@"hh\:mm");
+                break;
+            default:
+                ScheduleKindBox.SelectedIndex = 0;
+                break;
+        }
     }
 
     // 선택한 스케줄 종류에 따라 입력 필드를 활성/비활성화한다.
@@ -72,8 +110,16 @@ public partial class QueryEditWindow : Window
             ConnectionId = connection.Id,
             Sql = sql,
             NotifyPolicy = (NotifyPolicy)PolicyBox.SelectedItem,
-            Schedule = schedule
+            Schedule = schedule,
+            IsEnabled = _editingIsEnabled
         };
+
+        // 편집이면 Id를 보존(이력·스케줄 참조 유지).
+        if (_editingId.HasValue)
+        {
+            Query.Id = _editingId.Value;
+        }
+
         DialogResult = true;
     }
 
