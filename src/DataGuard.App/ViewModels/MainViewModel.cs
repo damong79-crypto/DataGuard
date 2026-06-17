@@ -1,20 +1,29 @@
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DataGuard.App.Views;
+using DataGuard.Core.Abstractions;
 using DataGuard.Core.Models;
+using DataGuard.Core.Services;
 
 namespace DataGuard.App.ViewModels;
 
 /// <summary>
-/// 메인 화면 ViewModel(MVVM). 현재는 골격 — 등록된 연결·쿼리 목록과
-/// "지금 실행" 명령의 자리를 잡아둔다. 실제 실행 배선은 CheckRunner 주입 후 연결한다.
+/// 메인 화면 ViewModel. 설정(연결·쿼리)을 로드하고, 등록 다이얼로그를 띄우며,
+/// "지금 실행"으로 CheckRunner를 호출해 MVP 흐름을 완성한다.
+/// (소규모 앱이라 다이얼로그를 VM에서 직접 연다 — 규모가 커지면 다이얼로그 서비스로 분리 권장.)
 /// </summary>
 public sealed partial class MainViewModel : ObservableObject
 {
+    private readonly CheckRunner _checkRunner;
+    private readonly IAppConfigStore _configStore;
+    private readonly ICredentialStore _credentials;
+    private readonly AppConfig _config;
+
     public ObservableCollection<DbConnectionInfo> Connections { get; } = new();
-
     public ObservableCollection<CheckQuery> Queries { get; } = new();
-
     public ObservableCollection<CheckResult> RecentResults { get; } = new();
 
     [ObservableProperty]
@@ -23,20 +32,99 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "준비됨";
 
-    /// <summary>
-    /// PRD MVP ③ "지금 실행". TODO: CheckRunner를 주입받아
-    /// 선택된 쿼리를 즉시 실행하고 결과를 RecentResults에 반영한다.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanRunNow))]
-    private Task RunNowAsync()
+    public MainViewModel(CheckRunner checkRunner, IAppConfigStore configStore, ICredentialStore credentials)
     {
-        // 배선 예정: await _checkRunner.RunAsync(SelectedQuery, connection, recipients, smtp);
-        StatusMessage = $"'{SelectedQuery?.Name}' 실행 — (구현 예정)";
-        return Task.CompletedTask;
+        _checkRunner = checkRunner;
+        _configStore = configStore;
+        _credentials = credentials;
+
+        _config = _configStore.Load();
+        foreach (DbConnectionInfo connection in _config.Connections)
+        {
+            Connections.Add(connection);
+        }
+        foreach (CheckQuery query in _config.Queries)
+        {
+            Queries.Add(query);
+        }
+    }
+
+    [RelayCommand]
+    private void AddConnection()
+    {
+        var dialog = new ConnectionEditWindow { Owner = Application.Current.MainWindow };
+        if (dialog.ShowDialog() != true || dialog.Connection is null)
+        {
+            return;
+        }
+
+        // 비밀번호는 자격 증명 저장소에만, 연결 정보는 설정에만 저장(평문 분리).
+        _credentials.Save(dialog.Connection.CredentialKey, dialog.Password);
+        _config.Connections.Add(dialog.Connection);
+        Connections.Add(dialog.Connection);
+        _configStore.Save(_config);
+        StatusMessage = $"연결 추가: {dialog.Connection.Name}";
+    }
+
+    [RelayCommand]
+    private void AddQuery()
+    {
+        if (Connections.Count == 0)
+        {
+            MessageBox.Show(Application.Current.MainWindow,
+                "먼저 DB 연결을 추가하세요.", "안내",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dialog = new QueryEditWindow(_config.Connections) { Owner = Application.Current.MainWindow };
+        if (dialog.ShowDialog() != true || dialog.Query is null)
+        {
+            return;
+        }
+
+        _config.Queries.Add(dialog.Query);
+        Queries.Add(dialog.Query);
+        _configStore.Save(_config);
+        StatusMessage = $"쿼리 추가: {dialog.Query.Name}";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRunNow))]
+    private async Task RunNowAsync()
+    {
+        if (SelectedQuery is null)
+        {
+            return;
+        }
+
+        DbConnectionInfo? connection =
+            _config.Connections.FirstOrDefault(c => c.Id == SelectedQuery.ConnectionId);
+        if (connection is null)
+        {
+            StatusMessage = "이 쿼리의 대상 연결을 찾을 수 없습니다.";
+            return;
+        }
+
+        try
+        {
+            StatusMessage = $"'{SelectedQuery.Name}' 실행 중...";
+            SmtpSettings? smtp = _config.IsEmailConfigured ? _config.Smtp : null;
+
+            CheckResult result = await _checkRunner.RunAsync(
+                SelectedQuery, connection, _config.Recipients, smtp);
+
+            RecentResults.Insert(0, result);
+            StatusMessage =
+                $"{result.QueryName}: {result.Status} (건수 {result.RowCount}, {result.DurationMs}ms)";
+        }
+        catch (Exception ex)
+        {
+            // 자격증명 누락 등 흐름 자체의 실패는 여기서 사용자에게 표시.
+            StatusMessage = $"실행 실패: {ex.Message}";
+        }
     }
 
     private bool CanRunNow() => SelectedQuery is not null;
 
-    // SelectedQuery 변경 시 RunNow 명령의 실행 가능 여부를 갱신(소스 생성기 패턴).
     partial void OnSelectedQueryChanged(CheckQuery? value) => RunNowCommand.NotifyCanExecuteChanged();
 }

@@ -3,18 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:DataGuard.App.ViewModels"
         mc:Ignorable="d"
         Title="DataGuard — DB 정합성 자동 체크" Height="560" Width="900">
 
-    <Window.DataContext>
-        <vm:MainViewModel />
-    </Window.DataContext>
-
     <DockPanel>
-        <!-- 상단 도구 모음: MVP의 "지금 실행" -->
+        <!-- 상단 도구 모음 -->
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar>
+                <Button Content="연결 추가" Command="{Binding AddConnectionCommand}" Padding="10,2" />
+                <Button Content="쿼리 추가" Command="{Binding AddQueryCommand}" Padding="10,2" />
+                <Separator />
                 <Button Content="지금 실행" Command="{Binding RunNowCommand}" Padding="10,2" />
             </ToolBar>
         </ToolBarTray>

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace DataGuard.Core.Models;
 
 /// <summary>
@@ -22,6 +24,7 @@ public sealed class DbConnectionInfo
 
     public string Username { get; set; } = string.Empty;
 
-    /// <summary>자격 증명 저장소에서 비밀번호를 찾을 때 쓰는 키.</summary>
+    /// <summary>자격 증명 저장소에서 비밀번호를 찾을 때 쓰는 키. 파생값이므로 직렬화 제외.</summary>
+    [JsonIgnore]
     public string CredentialKey => $"DataGuard:db:{Id:N}";
 }
