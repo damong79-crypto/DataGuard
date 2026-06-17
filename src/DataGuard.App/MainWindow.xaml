@@ -61,8 +61,12 @@
             </TabItem>
 
             <TabItem Header="설정">
-                <TextBlock Margin="12" TextWrapping="Wrap"
-                           Text="SMTP 발송 설정과 수신자 관리 자리 (구현 예정)." />
+                <StackPanel Margin="12">
+                    <TextBlock Text="이메일 발송 설정" FontWeight="Bold" Margin="0,0,0,8" />
+                    <TextBlock Text="{Binding SmtpSummary}" TextWrapping="Wrap" Margin="0,0,0,12" />
+                    <Button Content="SMTP / 수신자 설정..." Command="{Binding OpenSmtpSettingsCommand}"
+                            HorizontalAlignment="Left" Padding="12,4" />
+                </StackPanel>
             </TabItem>
         </TabControl>
     </DockPanel>

@@ -1,0 +1,58 @@
+<Window x:Class="DataGuard.App.Views.SmtpSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SMTP / 수신자 설정" Height="520" Width="480"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="110" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="SMTP 호스트" VerticalAlignment="Center" Margin="0,6" />
+        <TextBox   Grid.Row="0" Grid.Column="1" x:Name="HostBox" Margin="0,6"
+                   ToolTip="비워두면 이메일 발송이 비활성화됩니다." />
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="포트" VerticalAlignment="Center" Margin="0,6" />
+        <TextBox   Grid.Row="1" Grid.Column="1" x:Name="PortBox" Margin="0,6" />
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="SSL 사용" VerticalAlignment="Center" Margin="0,6" />
+        <CheckBox  Grid.Row="2" Grid.Column="1" x:Name="SslBox" VerticalAlignment="Center" Margin="0,6" />
+
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="사용자" VerticalAlignment="Center" Margin="0,6" />
+        <TextBox   Grid.Row="3" Grid.Column="1" x:Name="UsernameBox" Margin="0,6" />
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="비밀번호" VerticalAlignment="Center" Margin="0,6" />
+        <PasswordBox Grid.Row="4" Grid.Column="1" x:Name="PasswordBox" Margin="0,6" />
+
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="발신 주소" VerticalAlignment="Center" Margin="0,6" />
+        <TextBox   Grid.Row="5" Grid.Column="1" x:Name="FromBox" Margin="0,6"
+                   ToolTip="예: dataguard@company.com" />
+
+        <TextBlock Grid.Row="6" Grid.ColumnSpan="2" Margin="0,8,0,2"
+                   Text="수신자 (한 줄에 하나)" />
+        <TextBox   Grid.Row="7" Grid.ColumnSpan="2" x:Name="RecipientsBox" Margin="0,2"
+                   AcceptsReturn="True" TextWrapping="NoWrap"
+                   VerticalScrollBarVisibility="Auto" />
+
+        <StackPanel Grid.Row="8" Grid.ColumnSpan="2">
+            <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,8"
+                       Text="비밀번호는 빈칸으로 두면 기존 값이 유지됩니다. 입력 시 DPAPI 저장소에 암호화 저장됩니다." />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="저장" Width="80" IsDefault="True" Click="OnSave" Margin="0,0,8,0" />
+                <Button Content="취소" Width="80" IsCancel="True" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

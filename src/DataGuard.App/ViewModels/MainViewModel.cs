@@ -32,6 +32,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "준비됨";
 
+    [ObservableProperty]
+    private string _smtpSummary = string.Empty;
+
     public MainViewModel(CheckRunner checkRunner, IAppConfigStore configStore, ICredentialStore credentials)
     {
         _checkRunner = checkRunner;
@@ -47,6 +50,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Queries.Add(query);
         }
+
+        UpdateSmtpSummary();
     }
 
     [RelayCommand]
@@ -88,6 +93,37 @@ public sealed partial class MainViewModel : ObservableObject
         _configStore.Save(_config);
         StatusMessage = $"쿼리 추가: {dialog.Query.Name}";
     }
+
+    [RelayCommand]
+    private void OpenSmtpSettings()
+    {
+        var dialog = new SmtpSettingsWindow(_config.Smtp, _config.Recipients)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dialog.ShowDialog() != true || dialog.Settings is null)
+        {
+            return;
+        }
+
+        _config.Smtp = dialog.Settings;
+        _config.Recipients = dialog.Recipients;
+
+        // 비밀번호는 입력된 경우에만 갱신(빈칸이면 기존 값 유지).
+        if (dialog.NewPassword is not null)
+        {
+            _credentials.Save(SmtpSettings.CredentialKey, dialog.NewPassword);
+        }
+
+        _configStore.Save(_config);
+        UpdateSmtpSummary();
+        StatusMessage = "SMTP 설정이 저장되었습니다.";
+    }
+
+    private void UpdateSmtpSummary() =>
+        SmtpSummary = _config.IsEmailConfigured
+            ? $"발송 활성 — {_config.Smtp.Host}:{_config.Smtp.Port}, 수신자 {_config.Recipients.Count}명"
+            : "이메일 발송 비활성 — SMTP 호스트 또는 수신자가 설정되지 않았습니다.";
 
     [RelayCommand(CanExecute = nameof(CanRunNow))]
     private async Task RunNowAsync()
