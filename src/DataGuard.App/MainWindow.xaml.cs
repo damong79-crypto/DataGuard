@@ -17,6 +17,9 @@ public partial class MainWindow : Window
     private readonly WinForms.NotifyIcon _trayIcon;
     private bool _exitRequested;
 
+    /// <summary>true면 시작하자마자 트레이로 숨긴다(Windows 자동 실행 시).</summary>
+    public bool StartMinimizedToTray { get; set; }
+
     public MainWindow()
     {
         InitializeComponent();
@@ -44,6 +47,11 @@ public partial class MainWindow : Window
         if (DataContext is MainViewModel viewModel)
         {
             viewModel.CheckCompleted += OnCheckCompleted;
+        }
+
+        if (StartMinimizedToTray)
+        {
+            HideToTray();
         }
     }
 

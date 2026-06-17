@@ -31,7 +31,9 @@ public partial class App : Application
         var viewModel = _services.GetRequiredService<MainViewModel>();
         await viewModel.InitializeAsync().ConfigureAwait(true);
 
-        var window = new MainWindow { DataContext = viewModel };
+        // 자동 실행으로 켜진 경우(--minimized) 창을 띄우지 않고 트레이에서 시작한다.
+        bool startMinimized = e.Args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase));
+        var window = new MainWindow { DataContext = viewModel, StartMinimizedToTray = startMinimized };
         window.Show();
     }
 
@@ -46,6 +48,7 @@ public partial class App : Application
         services.AddSingleton<ICheckHistoryRepository>(_ => new SqliteCheckHistoryRepository());
         services.AddSingleton<IAppConfigStore>(_ => new JsonAppConfigStore());
         services.AddSingleton<ICheckScheduler, InAppCheckScheduler>();
+        services.AddSingleton<IStartupRegistration>(_ => new StartupRegistration());
 
         // 오케스트레이터 + ViewModel
         services.AddSingleton<CheckRunner>();

@@ -23,6 +23,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICheckHistoryRepository _history;
     private readonly ICheckScheduler _scheduler;
     private readonly IConnectionTester _connectionTester;
+    private readonly IStartupRegistration _startup;
     private readonly AppConfig _config;
 
     /// <summary>체크 1건이 끝날 때마다 발생(수동·자동 공통). 트레이 풍선 알림 등에 사용. UI 스레드에서 발생.</summary>
@@ -58,13 +59,18 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _retentionDays;
 
+    /// <summary>Windows 시작 시 자동 실행 여부.</summary>
+    [ObservableProperty]
+    private bool _runAtStartup;
+
     public MainViewModel(
         CheckRunner checkRunner,
         IAppConfigStore configStore,
         ICredentialStore credentials,
         ICheckHistoryRepository history,
         ICheckScheduler scheduler,
-        IConnectionTester connectionTester)
+        IConnectionTester connectionTester,
+        IStartupRegistration startup)
     {
         _checkRunner = checkRunner;
         _configStore = configStore;
@@ -72,6 +78,7 @@ public sealed partial class MainViewModel : ObservableObject
         _history = history;
         _scheduler = scheduler;
         _connectionTester = connectionTester;
+        _startup = startup;
 
         _config = _configStore.Load();
         foreach (DbConnectionInfo connection in _config.Connections)
@@ -85,7 +92,30 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         RetentionDays = _config.HistoryRetentionDays;
+        // 현재 등록 상태를 필드에 직접 반영(속성으로 설정하면 OnChanged가 불려 토글이 재실행됨).
+        _runAtStartup = _startup.IsEnabled();
         UpdateSmtpSummary();
+    }
+
+    // 사용자가 체크박스를 바꿀 때만 호출된다(초기값은 필드로 설정해 제외).
+    partial void OnRunAtStartupChanged(bool value)
+    {
+        try
+        {
+            if (value)
+            {
+                _startup.Enable();
+            }
+            else
+            {
+                _startup.Disable();
+            }
+            StatusMessage = value ? "Windows 시작 시 자동 실행 켜짐" : "자동 실행 꺼짐";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"자동 실행 설정 실패: {ex.Message}";
+        }
     }
 
     /// <summary>앱 시작 시 호출 — 오래된 이력을 정리한 뒤 현재 필터(기본: 전체)로 로드한다.</summary>
