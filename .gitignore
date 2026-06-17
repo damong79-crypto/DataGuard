@@ -35,6 +35,9 @@ secrets.json
 # --- 배포 산출물 ---
 publish/
 
+# --- 로컬 도구 로그 (smtp4dev 등) ---
+logs/
+
 # --- OS ---
 Thumbs.db
 Desktop.ini
