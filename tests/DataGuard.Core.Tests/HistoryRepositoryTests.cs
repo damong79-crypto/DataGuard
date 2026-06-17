@@ -88,6 +88,19 @@ public sealed class HistoryRepositoryTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task DeleteOlderThan_RemovesOnlyOlderRecords()
+    {
+        // 시드: now-1h, now-2d, now-10min. 1일 컷오프 → 2일 전 1건만 삭제.
+        int deleted = await _repo.DeleteOlderThanAsync(DateTimeOffset.Now.AddDays(-1));
+
+        Assert.Equal(1, deleted);
+
+        var remaining = await _repo.QueryAsync(new HistoryFilter());
+        Assert.Equal(2, remaining.Count);
+        Assert.DoesNotContain(remaining, r => r.Status == CheckStatus.Anomaly); // 삭제된 건이 2일 전 이상 레코드
+    }
+
     public void Dispose()
     {
         if (File.Exists(_dbPath))

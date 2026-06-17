@@ -24,4 +24,9 @@ public interface ICheckHistoryRepository
     Task<IReadOnlyList<CheckResult>> QueryAsync(
         HistoryFilter filter,
         CancellationToken cancellationToken = default);
+
+    /// <summary><paramref name="cutoff"/>보다 오래된 이력을 삭제하고 삭제 건수를 반환한다.</summary>
+    Task<int> DeleteOlderThanAsync(
+        DateTimeOffset cutoff,
+        CancellationToken cancellationToken = default);
 }

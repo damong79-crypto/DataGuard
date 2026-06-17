@@ -146,6 +146,19 @@ public sealed class SqliteCheckHistoryRepository : ICheckHistoryRepository
         return await ReadResultsAsync(command, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<int> DeleteOlderThanAsync(
+        DateTimeOffset cutoff, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM CheckResults WHERE ExecutedAt < $cutoff;";
+        command.Parameters.AddWithValue("$cutoff", cutoff.ToString("O"));
+
+        return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private static async Task<IReadOnlyList<CheckResult>> ReadResultsAsync(
         SqliteCommand command, CancellationToken cancellationToken)
     {

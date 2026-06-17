@@ -15,6 +15,9 @@ public sealed class AppConfig
     /// <summary>결과를 받을 수신자 이메일 목록(PRD 2단계: 수신자).</summary>
     public List<string> Recipients { get; set; } = new();
 
+    /// <summary>이력 보관 기간(일). 이보다 오래된 이력은 자동 삭제. 0이면 무제한(정리 안 함).</summary>
+    public int HistoryRetentionDays { get; set; } = 90;
+
     /// <summary>SMTP 호스트가 비어 있으면 이메일 발송을 건너뛴다.</summary>
     public bool IsEmailConfigured =>
         !string.IsNullOrWhiteSpace(Smtp.Host) && Recipients.Count > 0;

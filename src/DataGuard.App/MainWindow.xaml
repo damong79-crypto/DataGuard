@@ -105,6 +105,16 @@
                     <TextBlock Text="{Binding SmtpSummary}" TextWrapping="Wrap" Margin="0,0,0,12" />
                     <Button Content="SMTP / 수신자 설정..." Command="{Binding OpenSmtpSettingsCommand}"
                             HorizontalAlignment="Left" Padding="12,4" />
+
+                    <Separator Margin="0,16" />
+                    <TextBlock Text="이력 보관" FontWeight="Bold" Margin="0,0,0,8" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="보관 기간(일, 0=무제한)" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Width="60" Text="{Binding RetentionDays}" VerticalAlignment="Center" />
+                        <Button Content="저장" Command="{Binding SaveRetentionCommand}" Padding="12,2" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="앱 시작 시·저장 시 보관 기간이 지난 이력을 자동 삭제합니다." Foreground="Gray"
+                               TextWrapping="Wrap" Margin="0,8,0,0" />
                 </StackPanel>
             </TabItem>
         </TabControl>

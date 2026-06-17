@@ -54,6 +54,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _filterPeriodIndex; // 0=전체, 1=최근 24시간, 2=최근 7일, 3=최근 30일
 
+    /// <summary>이력 보관 기간(일). 0이면 무제한.</summary>
+    [ObservableProperty]
+    private int _retentionDays;
+
     public MainViewModel(
         CheckRunner checkRunner,
         IAppConfigStore configStore,
@@ -80,11 +84,56 @@ public sealed partial class MainViewModel : ObservableObject
             _scheduler.Schedule(query, OnScheduledTriggerAsync); // 스케줄 있는 쿼리만 실제 등록됨
         }
 
+        RetentionDays = _config.HistoryRetentionDays;
         UpdateSmtpSummary();
     }
 
-    /// <summary>앱 시작 시 호출 — 저장된 과거 이력을 현재 필터(기본: 전체)로 로드한다.</summary>
-    public Task InitializeAsync() => ApplyFilterAsync();
+    /// <summary>앱 시작 시 호출 — 오래된 이력을 정리한 뒤 현재 필터(기본: 전체)로 로드한다.</summary>
+    public async Task InitializeAsync()
+    {
+        await CleanupOldHistoryAsync();
+        await ApplyFilterAsync();
+    }
+
+    // 보관 기간이 지난 이력을 삭제한다(0이면 정리하지 않음).
+    private async Task CleanupOldHistoryAsync()
+    {
+        if (RetentionDays <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            int deleted = await _history.DeleteOlderThanAsync(DateTimeOffset.Now.AddDays(-RetentionDays));
+            if (deleted > 0)
+            {
+                StatusMessage = $"오래된 이력 {deleted}건 정리됨";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"이력 정리 실패: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveRetentionAsync()
+    {
+        if (RetentionDays < 0)
+        {
+            StatusMessage = "보관 기간은 0 이상이어야 합니다.";
+            return;
+        }
+
+        _config.HistoryRetentionDays = RetentionDays;
+        _configStore.Save(_config);
+        await CleanupOldHistoryAsync();
+        await ApplyFilterAsync();
+        StatusMessage = RetentionDays == 0
+            ? "이력 보관: 무제한으로 설정됨"
+            : $"이력 보관 기간 {RetentionDays}일 저장됨";
+    }
 
     [RelayCommand]
     private async Task ApplyFilterAsync()
