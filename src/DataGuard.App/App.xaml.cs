@@ -27,10 +27,11 @@ public partial class App : Application
         await _services.GetRequiredService<ICheckHistoryRepository>()
             .InitializeAsync().ConfigureAwait(true);
 
-        var window = new MainWindow
-        {
-            DataContext = _services.GetRequiredService<MainViewModel>()
-        };
+        // ViewModel 생성 후 과거 이력을 로드한다(스키마 생성 이후여야 함).
+        var viewModel = _services.GetRequiredService<MainViewModel>();
+        await viewModel.InitializeAsync().ConfigureAwait(true);
+
+        var window = new MainWindow { DataContext = viewModel };
         window.Show();
     }
 

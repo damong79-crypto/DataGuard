@@ -20,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly CheckRunner _checkRunner;
     private readonly IAppConfigStore _configStore;
     private readonly ICredentialStore _credentials;
+    private readonly ICheckHistoryRepository _history;
     private readonly AppConfig _config;
 
     public ObservableCollection<DbConnectionInfo> Connections { get; } = new();
@@ -35,11 +36,16 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _smtpSummary = string.Empty;
 
-    public MainViewModel(CheckRunner checkRunner, IAppConfigStore configStore, ICredentialStore credentials)
+    public MainViewModel(
+        CheckRunner checkRunner,
+        IAppConfigStore configStore,
+        ICredentialStore credentials,
+        ICheckHistoryRepository history)
     {
         _checkRunner = checkRunner;
         _configStore = configStore;
         _credentials = credentials;
+        _history = history;
 
         _config = _configStore.Load();
         foreach (DbConnectionInfo connection in _config.Connections)
@@ -52,6 +58,24 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         UpdateSmtpSummary();
+    }
+
+    /// <summary>앱 시작 시 호출 — 저장된 과거 이력을 이력 탭에 로드한다.</summary>
+    public async Task InitializeAsync()
+    {
+        try
+        {
+            IReadOnlyList<CheckResult> recent = await _history.GetRecentAcrossAllAsync();
+            RecentResults.Clear();
+            foreach (CheckResult result in recent)
+            {
+                RecentResults.Add(result);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"이력 로드 실패: {ex.Message}";
+        }
     }
 
     [RelayCommand]

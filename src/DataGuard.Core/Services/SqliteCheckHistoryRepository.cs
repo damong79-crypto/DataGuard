@@ -85,6 +85,30 @@ public sealed class SqliteCheckHistoryRepository : ICheckHistoryRepository
         command.Parameters.AddWithValue("$queryId", queryId.ToString());
         command.Parameters.AddWithValue("$limit", limit);
 
+        return await ReadResultsAsync(command, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<CheckResult>> GetRecentAcrossAllAsync(
+        int limit = 200, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, QueryId, QueryName, ExecutedAt, Status, RowCount, ErrorMessage, DurationMs
+            FROM CheckResults
+            ORDER BY ExecutedAt DESC
+            LIMIT $limit;
+            """;
+        command.Parameters.AddWithValue("$limit", limit);
+
+        return await ReadResultsAsync(command, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<IReadOnlyList<CheckResult>> ReadResultsAsync(
+        SqliteCommand command, CancellationToken cancellationToken)
+    {
         var results = new List<CheckResult>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))

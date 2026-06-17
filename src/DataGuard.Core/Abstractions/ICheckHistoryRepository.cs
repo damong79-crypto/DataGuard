@@ -14,4 +14,9 @@ public interface ICheckHistoryRepository
         Guid queryId,
         int limit = 100,
         CancellationToken cancellationToken = default);
+
+    /// <summary>쿼리 구분 없이 가장 최근 실행 이력을 모아서 조회한다(이력 탭 전체 보기용).</summary>
+    Task<IReadOnlyList<CheckResult>> GetRecentAcrossAllAsync(
+        int limit = 200,
+        CancellationToken cancellationToken = default);
 }
