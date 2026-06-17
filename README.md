@@ -35,9 +35,16 @@ DataGuard.sln
 ```bash
 dotnet build DataGuard.sln -c Debug
 dotnet run --project src/DataGuard.App
+dotnet test                              # 단위 테스트 (DataGuard.Core.Tests)
 ```
 
 > 요구: .NET 8 SDK (Windows). WPF이므로 Windows 전용.
+
+## 테스트
+
+`tests/DataGuard.Core.Tests` (xUnit) — 순수 로직 검증:
+- `ScheduleSpec.GetNextRun`: 매분/매일/평일 스케줄의 다음 실행 시각, 주말 건너뛰기
+- `RowCountResultJudge`: 0건=정상 / 1건+=이상 / 실행실패=오류
 
 ## 개발 우선순위 (PRD)
 

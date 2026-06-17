@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataGuard.Core", "src\DataG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataGuard.App", "src\DataGuard.App\DataGuard.App.csproj", "{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{51100DD5-AD1B-4B68-B645-DC46E2921DCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataGuard.Core.Tests", "tests\DataGuard.Core.Tests\DataGuard.Core.Tests.csproj", "{EB2FADEA-106A-4632-A433-E91E135F398A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,9 +30,14 @@ Global
 		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB2FADEA-106A-4632-A433-E91E135F398A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB2FADEA-106A-4632-A433-E91E135F398A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB2FADEA-106A-4632-A433-E91E135F398A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB2FADEA-106A-4632-A433-E91E135F398A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4227D3E4-169E-4319-8F71-E7AA55D66245} = {B1CB5D3D-3BC7-4276-9686-7B9AD643082A}
 		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B} = {B1CB5D3D-3BC7-4276-9686-7B9AD643082A}
+		{EB2FADEA-106A-4632-A433-E91E135F398A} = {51100DD5-AD1B-4B68-B645-DC46E2921DCD}
 	EndGlobalSection
 EndGlobal
