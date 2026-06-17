@@ -1,3 +1,4 @@
+using System.Text;
 using DataGuard.Core.Abstractions;
 using DataGuard.Core.Models;
 using Microsoft.Data.Sqlite;
@@ -102,6 +103,45 @@ public sealed class SqliteCheckHistoryRepository : ICheckHistoryRepository
             LIMIT $limit;
             """;
         command.Parameters.AddWithValue("$limit", limit);
+
+        return await ReadResultsAsync(command, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<CheckResult>> QueryAsync(
+        HistoryFilter filter, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+
+        // 지정된 조건만 WHERE 절에 동적으로 덧붙인다.
+        var sql = new StringBuilder(
+            "SELECT Id, QueryId, QueryName, ExecutedAt, Status, RowCount, ErrorMessage, DurationMs " +
+            "FROM CheckResults WHERE 1=1");
+
+        if (filter.QueryId is { } queryId)
+        {
+            sql.Append(" AND QueryId = $queryId");
+            command.Parameters.AddWithValue("$queryId", queryId.ToString());
+        }
+
+        if (filter.Status is { } status)
+        {
+            sql.Append(" AND Status = $status");
+            command.Parameters.AddWithValue("$status", (int)status);
+        }
+
+        if (filter.Since is { } since)
+        {
+            // ExecutedAt은 ISO 8601("O")로 저장된다. 동일 오프셋 환경에서 사전식 비교가 시간순과 일치.
+            sql.Append(" AND ExecutedAt >= $since");
+            command.Parameters.AddWithValue("$since", since.ToString("O"));
+        }
+
+        sql.Append(" ORDER BY ExecutedAt DESC LIMIT $limit");
+        command.Parameters.AddWithValue("$limit", filter.Limit);
+        command.CommandText = sql.ToString();
 
         return await ReadResultsAsync(command, cancellationToken).ConfigureAwait(false);
     }

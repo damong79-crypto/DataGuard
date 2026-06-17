@@ -19,4 +19,9 @@ public interface ICheckHistoryRepository
     Task<IReadOnlyList<CheckResult>> GetRecentAcrossAllAsync(
         int limit = 200,
         CancellationToken cancellationToken = default);
+
+    /// <summary>쿼리·상태·기간 등 조건으로 이력을 조회한다(이력 탭 필터용).</summary>
+    Task<IReadOnlyList<CheckResult>> QueryAsync(
+        HistoryFilter filter,
+        CancellationToken cancellationToken = default);
 }

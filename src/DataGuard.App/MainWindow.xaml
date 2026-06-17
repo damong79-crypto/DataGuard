@@ -63,6 +63,29 @@
             </TabItem>
 
             <TabItem Header="이력">
+              <DockPanel>
+                <WrapPanel DockPanel.Dock="Top" Margin="4" VerticalAlignment="Center">
+                    <TextBlock Text="쿼리" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <ComboBox Width="150" ItemsSource="{Binding Queries}" DisplayMemberPath="Name"
+                              SelectedItem="{Binding FilterQuery}" Margin="0,0,12,0"
+                              ToolTip="비우면 전체 쿼리" />
+                    <TextBlock Text="상태" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <ComboBox Width="90" SelectedIndex="{Binding FilterStatusIndex}" Margin="0,0,12,0">
+                        <ComboBoxItem Content="전체" />
+                        <ComboBoxItem Content="정상" />
+                        <ComboBoxItem Content="이상" />
+                        <ComboBoxItem Content="오류" />
+                    </ComboBox>
+                    <TextBlock Text="기간" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <ComboBox Width="120" SelectedIndex="{Binding FilterPeriodIndex}" Margin="0,0,12,0">
+                        <ComboBoxItem Content="전체" />
+                        <ComboBoxItem Content="최근 24시간" />
+                        <ComboBoxItem Content="최근 7일" />
+                        <ComboBoxItem Content="최근 30일" />
+                    </ComboBox>
+                    <Button Content="조회" Command="{Binding ApplyFilterCommand}" Padding="12,2" Margin="0,0,6,0" />
+                    <Button Content="초기화" Command="{Binding ClearFilterCommand}" Padding="12,2" />
+                </WrapPanel>
                 <DataGrid ItemsSource="{Binding RecentResults}" AutoGenerateColumns="False"
                           IsReadOnly="True" Margin="4">
                     <DataGrid.Columns>
@@ -70,8 +93,10 @@
                         <DataGridTextColumn Header="실행 시각" Binding="{Binding ExecutedAt}" Width="180" />
                         <DataGridTextColumn Header="상태" Binding="{Binding Status}" Width="100" />
                         <DataGridTextColumn Header="건수" Binding="{Binding RowCount}" Width="80" />
+                        <DataGridTextColumn Header="소요(ms)" Binding="{Binding DurationMs}" Width="90" />
                     </DataGrid.Columns>
                 </DataGrid>
+              </DockPanel>
             </TabItem>
 
             <TabItem Header="설정">

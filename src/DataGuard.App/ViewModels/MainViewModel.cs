@@ -44,6 +44,16 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _smtpSummary = string.Empty;
 
+    // 이력 필터 — null/0이면 해당 조건 미적용(전체).
+    [ObservableProperty]
+    private CheckQuery? _filterQuery;
+
+    [ObservableProperty]
+    private int _filterStatusIndex; // 0=전체, 1=정상, 2=이상, 3=오류
+
+    [ObservableProperty]
+    private int _filterPeriodIndex; // 0=전체, 1=최근 24시간, 2=최근 7일, 3=최근 30일
+
     public MainViewModel(
         CheckRunner checkRunner,
         IAppConfigStore configStore,
@@ -73,22 +83,54 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSmtpSummary();
     }
 
-    /// <summary>앱 시작 시 호출 — 저장된 과거 이력을 이력 탭에 로드한다.</summary>
-    public async Task InitializeAsync()
+    /// <summary>앱 시작 시 호출 — 저장된 과거 이력을 현재 필터(기본: 전체)로 로드한다.</summary>
+    public Task InitializeAsync() => ApplyFilterAsync();
+
+    [RelayCommand]
+    private async Task ApplyFilterAsync()
     {
+        var filter = new HistoryFilter
+        {
+            QueryId = FilterQuery?.Id,
+            Status = FilterStatusIndex switch
+            {
+                1 => CheckStatus.Normal,
+                2 => CheckStatus.Anomaly,
+                3 => CheckStatus.Error,
+                _ => null
+            },
+            Since = FilterPeriodIndex switch
+            {
+                1 => DateTimeOffset.Now.AddHours(-24),
+                2 => DateTimeOffset.Now.AddDays(-7),
+                3 => DateTimeOffset.Now.AddDays(-30),
+                _ => null
+            }
+        };
+
         try
         {
-            IReadOnlyList<CheckResult> recent = await _history.GetRecentAcrossAllAsync();
+            IReadOnlyList<CheckResult> results = await _history.QueryAsync(filter);
             RecentResults.Clear();
-            foreach (CheckResult result in recent)
+            foreach (CheckResult result in results)
             {
                 RecentResults.Add(result);
             }
+            StatusMessage = $"이력 {results.Count}건 조회됨";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"이력 로드 실패: {ex.Message}";
+            StatusMessage = $"이력 조회 실패: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private async Task ClearFilterAsync()
+    {
+        FilterQuery = null;
+        FilterStatusIndex = 0;
+        FilterPeriodIndex = 0;
+        await ApplyFilterAsync();
     }
 
     [RelayCommand]
