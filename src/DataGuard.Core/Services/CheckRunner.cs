@@ -117,7 +117,8 @@ public sealed class CheckRunner
             .ConfigureAwait(false);
     }
 
+    // 인증이 필요 없는 SMTP(예: 사내 릴레이·로컬 테스트 서버)도 있으므로,
+    // 저장된 비밀번호가 없으면 빈 문자열로 처리한다(발송 자체는 시도).
     private string ResolveSmtpPassword() =>
-        _credentials.Retrieve(SmtpSettings.CredentialKey)
-            ?? throw new InvalidOperationException("SMTP 비밀번호가 자격 증명 저장소에 없습니다.");
+        _credentials.Retrieve(SmtpSettings.CredentialKey) ?? string.Empty;
 }
