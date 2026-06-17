@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B1CB5D3D-3BC7-4276-9686-7B9AD643082A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataGuard.Core", "src\DataGuard.Core\DataGuard.Core.csproj", "{4227D3E4-169E-4319-8F71-E7AA55D66245}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataGuard.App", "src\DataGuard.App\DataGuard.App.csproj", "{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4227D3E4-169E-4319-8F71-E7AA55D66245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4227D3E4-169E-4319-8F71-E7AA55D66245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4227D3E4-169E-4319-8F71-E7AA55D66245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4227D3E4-169E-4319-8F71-E7AA55D66245}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4227D3E4-169E-4319-8F71-E7AA55D66245} = {B1CB5D3D-3BC7-4276-9686-7B9AD643082A}
+		{DDE764A5-CBC3-4DFA-B148-771125F9DE7B} = {B1CB5D3D-3BC7-4276-9686-7B9AD643082A}
+	EndGlobalSection
+EndGlobal
