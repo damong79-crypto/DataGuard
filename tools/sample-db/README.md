@@ -65,7 +65,7 @@ SELECT id FROM payments WHERE amount < 0;
 2. 체크 쿼리 1~5를 등록 (1~3은 "이상", 4~5는 "정상" 기대)
 3. **지금 실행**으로 결과·이력 확인
 4. 데이터를 바꿔 가며(예: `UPDATE payments SET amount=20000 WHERE order_id=102;`) 정상 전환 확인
-5. 스케줄(매 1분)·이메일 발송까지 확인
+5. 스케줄(매 1분)·이메일 발송까지 확인 (로컬 메일 테스트는 [local-smtp](../local-smtp/README.md) 참고)
 
 ## 초기화
 
