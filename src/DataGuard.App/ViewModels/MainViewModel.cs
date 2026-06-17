@@ -39,7 +39,7 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<CheckQuery> QueryFilterOptions { get; } = new();
 
     /// <summary>쿼리 필터의 "(전체)"를 나타내는 센티넬(목록·이력엔 들어가지 않음).</summary>
-    public static readonly CheckQuery AllQueriesOption = new() { Name = "(전체)" };
+    public static readonly CheckQuery AllQueriesOption = new() { Name = "전체" };
 
     [ObservableProperty]
     private CheckQuery? _selectedQuery;
