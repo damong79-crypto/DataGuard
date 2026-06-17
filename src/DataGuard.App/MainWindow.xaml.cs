@@ -26,7 +26,7 @@ public partial class MainWindow : Window
 
         _trayIcon = new WinForms.NotifyIcon
         {
-            Icon = Drawing.SystemIcons.Application,
+            Icon = LoadAppIcon(),
             Visible = true,
             Text = "DataGuard — DB 정합성 자동 체크"
         };
@@ -110,6 +110,13 @@ public partial class MainWindow : Window
             ? $"{result.QueryName}: 이상 {result.RowCount}건 발견"
             : $"{result.QueryName}: 실행 오류";
         _trayIcon.ShowBalloonTip(3000);
+    }
+
+    // 트레이용 아이콘을 리소스에서 로드(실패 시 시스템 기본).
+    private static Drawing.Icon LoadAppIcon()
+    {
+        var info = Application.GetResourceStream(new Uri("Resources/app.ico", UriKind.Relative));
+        return info is not null ? new Drawing.Icon(info.Stream) : Drawing.SystemIcons.Application;
     }
 
     protected override void OnClosed(EventArgs e)

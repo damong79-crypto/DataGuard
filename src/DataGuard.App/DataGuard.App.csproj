@@ -17,6 +17,13 @@
     <UseWPF>true</UseWPF>
     <!-- 트레이 아이콘(NotifyIcon)을 위해 WinForms 상호운용 사용. WPF 자체엔 트레이 아이콘이 없음. -->
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- exe(작업표시줄·파일) 아이콘 -->
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 런타임에 창·트레이에서 로드할 수 있도록 리소스로도 포함 -->
+    <Resource Include="Resources\app.ico" />
+  </ItemGroup>
 
 </Project>
